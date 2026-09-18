@@ -2,6 +2,7 @@ import { ModelProvider } from 'model-bank';
 
 import type { OpenAICompatibleFactoryOptions } from '../../core/openaiCompatibleFactory';
 import { createOpenAICompatibleRuntime } from '../../core/openaiCompatibleFactory';
+import { createOpenAICompatibleImage } from '../../core/openaiCompatibleFactory/createImage';
 import type { CreateImageMethodOptions, CreateImagePayload } from '../../types/image';
 import { processMultiProviderModelList } from '../../utils/modelParse';
 import { createOpenRouterImage } from './createImage';
@@ -134,7 +135,12 @@ export const params = {
       const cachedInputPrice = formatPrice(pricing.input_cache_read);
       const writeCacheInputPrice = formatPrice(pricing.input_cache_write);
 
-      const isFree = inputPrice === 0 && outputPrice === 0 && !displayName.endsWith('(free)');
+      // Zero text-token prices do not make image generation free.
+      const isFree =
+        inputPrice === 0 &&
+        outputPrice === 0 &&
+        Object.values(pricing).every((price) => Number(price) === 0) &&
+        !displayName.endsWith('(free)');
       if (isFree) {
         displayName += ' (free)';
       }
@@ -214,11 +220,16 @@ export class LobeOpenRouterAI extends BaseOpenRouterAI {
     if (payload.model.endsWith(':image')) return super.createImage(payload, options);
 
     try {
-      return await createOpenRouterImage(
-        this.client,
-        payload,
-        this.getMappedModelId(payload.model),
-      );
+      const requestModel = this.getMappedModelId(payload.model);
+      // Muse is currently served through Chat Completions only.
+      // https://openrouter.ai/meta/muse-image/llms.txt
+      if (requestModel === 'meta/muse-image') {
+        return await createOpenAICompatibleImage(this.client, payload, this.id, {
+          requestModel,
+          routingModel: `${requestModel}:image`,
+        });
+      }
+      return await createOpenRouterImage(this.client, payload, requestModel);
     } catch (error) {
       throw this.handleError(error);
     }

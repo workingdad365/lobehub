@@ -33,7 +33,7 @@ export const createOpenRouterImage = async (
       prompt,
       ...(quality && { quality }),
       ...(resolution && { resolution }),
-      ...(seed !== undefined && { seed }),
+      ...(seed != null && { seed }),
       ...(size && size !== 'auto' && { size }),
       stream: false,
     },
