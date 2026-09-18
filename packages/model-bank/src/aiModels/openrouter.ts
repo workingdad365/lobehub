@@ -1,4 +1,5 @@
-import type { AIChatModelCard } from '../types/aiModel';
+import { gptImage2_5Schema } from '../const/imageParameters';
+import type { AIChatModelCard, AIImageModelCard } from '../types/aiModel';
 
 // https://openrouter.ai/docs/api-reference/list-available-models
 const openrouterChatModels: AIChatModelCard[] = [
@@ -848,6 +849,25 @@ const openrouterChatModels: AIChatModelCard[] = [
   },
 ];
 
-export const allModels = [...openrouterChatModels];
+// Native Images API models use their original IDs, without the chat-only :image suffix.
+// https://openrouter.ai/models?q=gpt-image-2.5
+const openrouterImageModels: AIImageModelCard[] = [
+  {
+    description: 'GPT Image 2.5 Sunburst for precise image generation and editing via OpenRouter.',
+    displayName: 'GPT Image 2.5 Sunburst',
+    id: 'openai/gpt-image-2.5-sunburst',
+    parameters: gptImage2_5Schema,
+    type: 'image',
+  },
+  {
+    description: 'GPT Image 2.5 Flare for fast image generation and editing via OpenRouter.',
+    displayName: 'GPT Image 2.5 Flare',
+    id: 'openai/gpt-image-2.5-flare',
+    parameters: gptImage2_5Schema,
+    type: 'image',
+  },
+];
+
+export const allModels = [...openrouterChatModels, ...openrouterImageModels];
 
 export default allModels;

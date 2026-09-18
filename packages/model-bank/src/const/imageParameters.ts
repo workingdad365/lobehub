@@ -43,6 +43,17 @@ export const gptImage2Schema: ModelParamsSchema = {
   },
 };
 
+// https://developers.openai.com/api/docs/guides/image-generation#size-and-quality-options
+export const gptImage2_5Schema: ModelParamsSchema = {
+  imageUrls: { default: [], maxCount: 16 },
+  prompt: { default: '' },
+  quality: {
+    default: 'auto',
+    enum: ['auto', 'low', 'medium', 'high', 'xhigh', 'max'],
+  },
+  size: gptImage2Schema.size,
+};
+
 export const nanoBananaParameters: ModelParamsSchema = {
   aspectRatio: {
     default: 'auto',

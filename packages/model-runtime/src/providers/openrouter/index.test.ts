@@ -627,7 +627,9 @@ describe('LobeOpenRouterAI - custom features', () => {
 
       const models = await params.models();
 
-      expect(fetch).toHaveBeenCalledWith('https://openrouter.ai/api/v1/models');
+      expect(fetch).toHaveBeenCalledWith(
+        'https://openrouter.ai/api/v1/models?output_modalities=text,image',
+      );
       expect(models.length).toBeGreaterThan(0);
     });
 

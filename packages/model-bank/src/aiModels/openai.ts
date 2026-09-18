@@ -1,4 +1,4 @@
-import { gptImage1Schema, gptImage2Schema } from '../const/imageParameters';
+import { gptImage1Schema, gptImage2_5Schema, gptImage2Schema } from '../const/imageParameters';
 import type {
   AIASRModelCard,
   AIChatModelCard,
@@ -1512,6 +1512,44 @@ export const openaiASRModels: AIASRModelCard[] = [
 
 // Image generation models
 export const openaiImageModels: AIImageModelCard[] = [
+  // https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst
+  {
+    description:
+      'GPT Image 2.5 Sunburst generates and edits images from text and image inputs, with a focus on editing precision. Supports up to 4K output and quality settings through max.',
+    displayName: 'GPT Image 2.5 Sunburst',
+    enabled: true,
+    id: 'gpt-image-2.5-sunburst',
+    parameters: gptImage2_5Schema,
+    pricing: {
+      units: [
+        { name: 'textInput', rate: 5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput_cacheRead', rate: 1.25, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 8, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput_cacheRead', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageOutput', rate: 30, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    type: 'image',
+  },
+  // https://developers.openai.com/api/docs/models/gpt-image-2.5-flare
+  {
+    description:
+      'GPT Image 2.5 Flare is optimized for fast, high-quality everyday image generation and editing from text and image inputs. Supports up to 4K output and quality settings through max.',
+    displayName: 'GPT Image 2.5 Flare',
+    enabled: true,
+    id: 'gpt-image-2.5-flare',
+    parameters: gptImage2_5Schema,
+    pricing: {
+      units: [
+        { name: 'textInput', rate: 5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput_cacheRead', rate: 1.25, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 8, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput_cacheRead', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageOutput', rate: 30, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    type: 'image',
+  },
   {
     description:
       "OpenAI's next-generation multimodal image model with native reasoning, up to 4K resolution, near-perfect text rendering, and high-fidelity multilingual support.",

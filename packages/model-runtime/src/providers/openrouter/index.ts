@@ -2,7 +2,9 @@ import { ModelProvider } from 'model-bank';
 
 import type { OpenAICompatibleFactoryOptions } from '../../core/openaiCompatibleFactory';
 import { createOpenAICompatibleRuntime } from '../../core/openaiCompatibleFactory';
+import type { CreateImageMethodOptions, CreateImagePayload } from '../../types/image';
 import { processMultiProviderModelList } from '../../utils/modelParse';
+import { createOpenRouterImage } from './createImage';
 import type { OpenRouterModelCard, OpenRouterReasoning } from './type';
 
 const formatPrice = (price?: string) => {
@@ -93,7 +95,10 @@ export const params = {
     chatCompletion: () => process.env.DEBUG_OPENROUTER_CHAT_COMPLETION === '1',
   },
   models: async () => {
-    const response = await fetch('https://openrouter.ai/api/v1/models');
+    // The endpoint defaults to text output, which excludes native image models.
+    const response = await fetch(
+      'https://openrouter.ai/api/v1/models?output_modalities=text,image',
+    );
     if (!response.ok) {
       throw new Error(`OpenRouter models API request failed with status ${response.status}`);
     }
@@ -202,4 +207,20 @@ export const params = {
   provider: ModelProvider.OpenRouter,
 } satisfies OpenAICompatibleFactoryOptions;
 
-export const LobeOpenRouterAI = createOpenAICompatibleRuntime(params);
+const BaseOpenRouterAI = createOpenAICompatibleRuntime(params);
+
+export class LobeOpenRouterAI extends BaseOpenRouterAI {
+  async createImage(payload: CreateImagePayload, options?: CreateImageMethodOptions) {
+    if (payload.model.endsWith(':image')) return super.createImage(payload, options);
+
+    try {
+      return await createOpenRouterImage(
+        this.client,
+        payload,
+        this.getMappedModelId(payload.model),
+      );
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+}

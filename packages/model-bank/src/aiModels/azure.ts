@@ -1,3 +1,4 @@
+import { gptImage2_5Schema } from '../const/imageParameters';
 import type { AIChatModelCard, AIImageModelCard } from '../types/aiModel';
 
 const azureChatModels: AIChatModelCard[] = [
@@ -739,6 +740,21 @@ const azureChatModels: AIChatModelCard[] = [
 ];
 
 const azureImageModels: AIImageModelCard[] = [
+  // https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/models#image-generation-models
+  {
+    description: 'GPT Image 2.5 Sunburst for precise image generation and editing on Azure OpenAI.',
+    displayName: 'GPT Image 2.5 Sunburst',
+    id: 'gpt-image-2.5-sunburst',
+    parameters: gptImage2_5Schema,
+    type: 'image',
+  },
+  {
+    description: 'GPT Image 2.5 Flare for fast image generation and editing on Azure OpenAI.',
+    displayName: 'GPT Image 2.5 Flare',
+    id: 'gpt-image-2.5-flare',
+    parameters: gptImage2_5Schema,
+    type: 'image',
+  },
   {
     description: 'ChatGPT Image 1',
     displayName: 'GPT Image 1',
