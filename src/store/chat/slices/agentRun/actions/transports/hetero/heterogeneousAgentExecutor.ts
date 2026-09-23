@@ -22,6 +22,7 @@ import {
   type SubagentIntent,
   type SubagentRunSnapshot,
 } from '@lobechat/heterogeneous-agents';
+import { normalizeHeterogeneousMessageError } from '@lobechat/heterogeneous-agents/errors';
 import { formatContextSelections, formatPageSelections } from '@lobechat/prompts';
 import type {
   ChatMessageError,
@@ -85,7 +86,7 @@ import { getNativeHeteroSessionBindingKey } from './heteroResume';
 import { createMessageWriteBatcher, type ToolMessageUpdateOperation } from './messageWriteBatcher';
 import { createPendingCreateLedger } from './pendingCreateLedger';
 import { resolveQuotaAccountSpawnPlan } from './resolveQuotaAccountEnv';
-import { buildResumeReplayMessages } from './resumeReplay';
+import { buildResumeReplayMessages, hydrateProjectedToolMessages } from './resumeReplay';
 import { buildLobeHubSessionEnv } from './sessionEnv';
 
 /** Mirrors `idGenerator('threads', 16)` on the server so sync-allocated ids have the same shape. */
@@ -139,7 +140,10 @@ const shouldSuppressTerminalErrorEcho = (content: string, error: ChatMessageErro
   return !!normalizedContent && !!normalizedRawError && normalizedContent === normalizedRawError;
 };
 
-const toHeterogeneousAgentMessageError = (error: unknown, agentType?: string): ChatMessageError => {
+const toRawHeterogeneousAgentMessageError = (
+  error: unknown,
+  agentType?: string,
+): ChatMessageError => {
   const authRequiredError = maybeClassifyCliAuthRequiredError(error, agentType);
   if (authRequiredError) {
     return {
@@ -198,6 +202,12 @@ const toHeterogeneousAgentMessageError = (error: unknown, agentType?: string): C
     type: AgentRuntimeErrorType.AgentRuntimeError,
   };
 };
+
+const toHeterogeneousAgentMessageError = (error: unknown, agentType?: string): ChatMessageError =>
+  normalizeHeterogeneousMessageError(
+    toRawHeterogeneousAgentMessageError(error, agentType),
+    agentType,
+  );
 
 const isRecoverableResumeError = (
   error: unknown,
@@ -2473,10 +2483,16 @@ export const executeHeterogeneousAgent = async (
     // it, `--resume <staleId>` dies with "No conversation found with session ID".
     // Raw rows first: the display map collapses history into virtual
     // `assistantGroup` rows, which carry no replayable turn.
+    // Tool bodies the read path projected away are restored first: this
+    // transcript is written to disk and resumed from, so an emptied tool result
+    // would persist as "this tool returned nothing" for every later turn.
     const resumeReplayMessages = resumeSessionId
       ? buildResumeReplayMessages(
-          (get().dbMessagesMap?.[messageMapKey(context)] ??
-            get().messagesMap?.[messageMapKey(context)]) as UIChatMessage[] | undefined,
+          await hydrateProjectedToolMessages(
+            (get().dbMessagesMap?.[messageMapKey(context)] ??
+              get().messagesMap?.[messageMapKey(context)]) as UIChatMessage[] | undefined,
+            messageService.getToolResultPayload,
+          ),
           message,
         )
       : undefined;
