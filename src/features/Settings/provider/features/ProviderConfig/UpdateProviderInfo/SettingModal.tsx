@@ -1,14 +1,16 @@
 'use client';
 
-import { Flexbox, Icon, Input, TextArea } from '@lobehub/ui';
+import { Flexbox, Icon } from '@lobehub/ui';
 import {
   Button,
   confirmModal,
   createModal,
+  Input,
   ModalFooter,
   type ModalInstance,
   Select,
   Text,
+  TextArea,
   toast,
   useModalContext,
 } from '@lobehub/ui/base-ui';
@@ -179,7 +181,7 @@ const SettingContent = memo<SettingContentProps>(({ initialValues, id }) => {
           padding: 0,
         }}
       >
-        <Button danger disabled={loading} type={'primary'} onClick={handleDelete}>
+        <Button danger disabled={loading} onClick={handleDelete}>
           {t('delete', { ns: 'common' })}
         </Button>
         <Button loading={loading} type={'primary'} onClick={() => form.submit()}>

@@ -1,7 +1,7 @@
 'use client';
 
 import { AgentRuntimeErrorType } from '@lobechat/model-runtime';
-import { Block, Flexbox, Icon, TextArea } from '@lobehub/ui';
+import { Block, Flexbox, Icon } from '@lobehub/ui';
 import {
   ActionIcon,
   Button,
@@ -9,8 +9,10 @@ import {
   type DropdownItem,
   DropdownMenu,
   Select,
+  Spin,
   Tag,
   Text,
+  TextArea,
   toast,
 } from '@lobehub/ui/base-ui';
 import { createStaticStyles, cssVar } from 'antd-style';
@@ -29,7 +31,6 @@ import {
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import NeuralNetworkLoading from '@/components/NeuralNetworkLoading';
 import {
   CriterionList,
   CriterionRequiredChip,
@@ -574,7 +575,7 @@ const TaskVerifyConfig = memo(() => {
     return (
       <Block className={styles.section} variant={'outlined'}>
         <Flexbox horizontal align={'center'} gap={12}>
-          <NeuralNetworkLoading size={20} />
+          <Spin size="middle" variant="network" />
           <Text className={styles.subtitle}>{t('verifyConfig.generating')}</Text>
         </Flexbox>
       </Block>

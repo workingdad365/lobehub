@@ -1,9 +1,8 @@
 'use client';
 
-import { Center, Flexbox, Icon, Input, TextArea, Tooltip } from '@lobehub/ui';
-import { confirmModal, Text, toast } from '@lobehub/ui/base-ui';
-import { type UploadProps } from 'antd';
-import { Form, Upload } from 'antd';
+import { Center, Flexbox, Icon, Tooltip } from '@lobehub/ui';
+import { confirmModal, Input, Text, TextArea, toast, Upload } from '@lobehub/ui/base-ui';
+import { Form } from 'antd';
 import { cssVar } from 'antd-style';
 import { CircleHelp, Globe, ImagePlus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
@@ -73,6 +72,8 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
     const { t } = useTranslation('marketAuth');
 
     const [form] = Form.useForm<FormValues>();
+    const displayName = Form.useWatch('displayName', form);
+    const userName = Form.useWatch('userName', form);
     const [loading, setLoading] = useState(false);
     const locale = useGlobalStore(globalGeneralSelectors.currentLanguage);
 
@@ -192,13 +193,10 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
     }, []);
 
     // Handle banner upload
-    const handleBannerUpload: UploadProps['customRequest'] = useCallback(
-      async (options: Parameters<NonNullable<UploadProps['customRequest']>>[0]) => {
-        const file = options.file as File;
-
+    const handleBannerUpload = useCallback(
+      async (file: File) => {
         if (file.size > MAX_FILE_SIZE) {
           toast.error(t('profileSetup.errors.fileTooLarge'));
-          options.onError?.(new Error('File too large'));
           return;
         }
 
@@ -207,12 +205,10 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
           const result = await uploadWithProgress({ file });
           if (result?.url) {
             setBannerUrl(result.url);
-            options.onSuccess?.(result);
           }
         } catch (error) {
           console.error('[ProfileSetupModal] Banner upload failed:', error);
           toast.error(t('profileSetup.errors.uploadFailed'));
-          options.onError?.(error as Error);
         } finally {
           setBannerUploading(false);
         }
@@ -400,9 +396,9 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
                 ]}
               >
                 <Input
-                  showCount
                   maxLength={50}
                   placeholder={t('profileSetup.fields.displayName.placeholder')}
+                  suffix={`${displayName?.length ?? 0} / 50`}
                 />
               </Form.Item>
               <Form.Item
@@ -432,10 +428,10 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
                 ]}
               >
                 <Input
-                  showCount
                   maxLength={32}
                   placeholder={t('profileSetup.fields.userName.placeholder')}
                   prefix="@"
+                  suffix={`${userName?.length ?? 0} / 32`}
                 />
               </Form.Item>
             </Flexbox>
@@ -492,10 +488,9 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
                 <Flexbox gap={8} width="100%">
                   <Upload
                     accept="image/*"
-                    customRequest={handleBannerUpload}
                     maxCount={1}
-                    showUploadList={false}
                     style={{ display: 'block', width: '100%' }}
+                    onFiles={([file]) => handleBannerUpload(file)}
                   >
                     <div
                       style={{

@@ -2,14 +2,17 @@ import { isDesktop } from '@lobechat/const';
 import { TITLE_BAR_HEIGHT } from '@lobechat/desktop-bridge';
 import { type LobeToolCustomPlugin } from '@lobechat/types';
 import { Flexbox } from '@lobehub/ui';
-import { Button, Drawer, toast } from '@lobehub/ui/base-ui';
-import { Form, Popconfirm } from 'antd';
+import { Button, confirmModal, Drawer, toast } from '@lobehub/ui/base-ui';
+import { Form } from 'antd';
 import { useResponsive } from 'antd-style';
 import { memo, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { openConnectorOAuthPopup } from '@/utils/connectorOAuth';
+
 import MCPManifestForm from './MCPManifestForm';
 import PluginPreview from './PluginPreview';
+import { getSaveErrorToast } from './saveErrorToast';
 
 interface DevModalProps {
   /** Enable the connector-backed OAuth auth type in the MCP form (see MCPManifestForm). */
@@ -73,26 +76,32 @@ const DevModal = memo<DevModalProps>(
         onOpenChange(false);
       } catch (error) {
         console.error('[DevModal] Install failed:', error);
-        const httpStatus = (error as { data?: { httpStatus?: number } })?.data?.httpStatus;
-        toast.error(
-          httpStatus === 403
+        const { description, titleKey } = getSaveErrorToast(error, Boolean(ctx));
+        const title =
+          titleKey === 'dev.permissionDenied'
             ? t(
                 'dev.permissionDenied',
                 'You are not allowed to modify this connector — only the creator or a workspace owner can',
               )
-            : t('dev.saveError'),
-        );
+            : t(titleKey as never);
+        toast.error(description ? { description, title } : title);
       } finally {
+        ctx?.oauthPopup?.close();
         setSubmitting(false);
       }
     };
 
-    // OAuth needs window.open within the user-gesture tick (browsers block it
+    // Web OAuth needs window.open within the user-gesture tick (browsers block it
     // after an async boundary). Open a blank popup synchronously here, validate,
-    // then hand it to onSave which navigates it to the authorize URL. Shared by
+    // then hand it to onSave. Desktop opens a native window via IPC instead. Shared by
     // the footer save button and the in-form "Authorize" button.
     const runOAuthFlow = async () => {
-      const popup = window.open('about:blank', 'lobe-connector-oauth', 'width=600,height=720');
+      if (submitting) return;
+      const popup = openConnectorOAuthPopup();
+      if (popup === null) {
+        toast.error(t('dev.oauthError.blocked'));
+        return;
+      }
       try {
         const values = (await form.validateFields()) as LobeToolCustomPlugin;
         await doSave(values, { oauthPopup: popup });
@@ -115,25 +124,25 @@ const DevModal = memo<DevModalProps>(
     const footer = (
       <Flexbox horizontal flex={1} gap={12} justify={'space-between'}>
         {isEditMode ? (
-          <Popconfirm
-            arrow={false}
-            cancelText={t('cancel', { ns: 'common' })}
-            okText={t('ok', { ns: 'common' })}
-            placement={'topLeft'}
-            title={t('dev.confirmDeleteDevPlugin')}
-            okButtonProps={{
-              danger: true,
-              type: 'primary',
-            }}
-            onConfirm={() => {
-              onDelete?.();
-              toast.success(t('dev.deleteSuccess'));
-            }}
+          <Button
+            danger
+            style={buttonStyle}
+            onClick={() =>
+              confirmModal({
+                cancelText: t('cancel', { ns: 'common' }),
+                okButtonProps: { danger: true },
+                okText: t('ok', { ns: 'common' }),
+                onOk: () => {
+                  onDelete?.();
+                  toast.success(t('dev.deleteSuccess'));
+                },
+                content: t('dev.confirmDeleteDevPlugin'),
+                title: t('delete', { ns: 'common' }),
+              })
+            }
           >
-            <Button danger style={buttonStyle}>
-              {t('delete', { ns: 'common' })}
-            </Button>
-          </Popconfirm>
+            {t('delete', { ns: 'common' })}
+          </Button>
         ) : (
           <div />
         )}

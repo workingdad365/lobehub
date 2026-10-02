@@ -1,5 +1,5 @@
 import { deriveWorktreePath, type DeviceGitWorktreeListItem } from '@lobechat/types';
-import { Icon, Input, Tooltip } from '@lobehub/ui';
+import { Icon, Tooltip } from '@lobehub/ui';
 import {
   confirmModal,
   DropdownMenuItem,
@@ -8,6 +8,8 @@ import {
   DropdownMenuPositioner,
   DropdownMenuRoot,
   DropdownMenuTrigger,
+  Input,
+  Spin,
   toast,
 } from '@lobehub/ui/base-ui';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
@@ -16,7 +18,6 @@ import {
   FolderPlusIcon,
   GitBranchIcon,
   GitForkIcon,
-  LoaderCircleIcon,
   RefreshCwIcon,
   SearchIcon,
   Trash2Icon,
@@ -123,14 +124,6 @@ const styles = createStaticStyles(({ css }) => ({
     padding-block: 4px;
     padding-inline: 12px;
     border-block-end: 1px solid ${cssVar.colorSplit};
-
-    .ant-input-affix-wrapper {
-      padding-inline: 0;
-    }
-
-    .ant-input-prefix {
-      margin-inline-end: 8px;
-    }
   `,
   section: css`
     flex: 1;
@@ -660,6 +653,7 @@ const WorktreeSwitcher = memo<WorktreeSwitcherProps>(
                     placeholder={t('workingDirectory.worktreeSearchPlaceholder')}
                     prefix={<Icon icon={SearchIcon} size={14} />}
                     size="small"
+                    style={{ paddingInline: 0 }}
                     value={search}
                     variant="borderless"
                     onChange={(e) => setSearch(e.target.value)}
@@ -745,7 +739,7 @@ const WorktreeSwitcher = memo<WorktreeSwitcherProps>(
                           </div>
                           <div className={styles.actionCell}>
                             {removing ? (
-                              <Icon spin icon={LoaderCircleIcon} size={13} />
+                              <Spin size={13} />
                             ) : worktree.current ? (
                               <Icon className={styles.check} icon={CheckIcon} size={14} />
                             ) : (

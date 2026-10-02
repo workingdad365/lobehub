@@ -1,9 +1,9 @@
 'use client';
 
-import { Flexbox } from '@lobehub/ui';
-import { Avatar, Button, Select } from '@lobehub/ui/base-ui';
+import { Empty, Flexbox } from '@lobehub/ui';
+import { Avatar, Button, Input, Select, Spin, TextArea } from '@lobehub/ui/base-ui';
 import { useMutation } from '@tanstack/react-query';
-import { Empty, Form, Input, Spin } from 'antd';
+import { Form } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import { type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -145,7 +145,7 @@ const OAuthCredForm: FC<OAuthCredFormProps> = ({ credsApi, disabled, onBack, onS
       </Form.Item>
 
       <Form.Item label={t('creds.form.description')} name="description">
-        <Input.TextArea
+        <TextArea
           disabled={disabled}
           placeholder={t('creds.form.descriptionPlaceholder')}
           rows={2}

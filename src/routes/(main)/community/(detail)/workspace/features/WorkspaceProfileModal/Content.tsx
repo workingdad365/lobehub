@@ -1,12 +1,21 @@
 'use client';
 
 import { OFFICIAL_URL } from '@lobechat/const';
-import { Center, Flexbox, Icon, Input, TextArea, Tooltip } from '@lobehub/ui';
-import { Accordion, Button, Text, toast, useModalContext } from '@lobehub/ui/base-ui';
-import type { UploadProps } from 'antd';
-import { Form, Input as AntInput, Upload } from 'antd';
+import { Center, Flexbox, Icon, Tooltip } from '@lobehub/ui';
+import {
+  Accordion,
+  Button,
+  Input,
+  Spin,
+  Text,
+  TextArea,
+  toast,
+  Upload,
+  useModalContext,
+} from '@lobehub/ui/base-ui';
+import { Form } from 'antd';
 import { cssVar } from 'antd-style';
-import { CircleHelp, Globe, ImagePlus, Loader2, Trash2 } from 'lucide-react';
+import { CircleHelp, Globe, ImagePlus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -75,6 +84,7 @@ export const Content = memo<ContentProps>(({ user, onSuccess }) => {
   // a well-formed handle, and treat it purely as a UX hint — the setup mutation
   // still rejects a taken handle on submit.
   const namespaceValue = Form.useWatch('namespace', form);
+  const displayNameValue = Form.useWatch('displayName', form);
   const trimmedNamespace = (namespaceValue ?? '').trim();
   const [namespaceAvailability, setNamespaceAvailability] = useState<NamespaceAvailability>('idle');
 
@@ -109,7 +119,7 @@ export const Content = memo<ContentProps>(({ user, onSuccess }) => {
     }[namespaceAvailability];
     return (
       <Flexbox horizontal align="center" gap={6} style={{ color, fontSize: 12 }}>
-        {namespaceAvailability === 'checking' && <Icon spin icon={Loader2} size={13} />}
+        {namespaceAvailability === 'checking' && <Spin size={13} />}
         {t(`user.workspaceProfile.fields.namespace.${namespaceAvailability}` as any)}
       </Flexbox>
     );
@@ -142,13 +152,10 @@ export const Content = memo<ContentProps>(({ user, onSuccess }) => {
     [t, uploadWithProgress],
   );
 
-  const handleBannerUpload: UploadProps['customRequest'] = useCallback(
-    async (options: Parameters<NonNullable<UploadProps['customRequest']>>[0]) => {
-      const file = options.file as File;
-
+  const handleBannerUpload = useCallback(
+    async (file: File) => {
       if (file.size > MAX_FILE_SIZE) {
         toast.error(t('user.workspaceProfile.errors.fileTooLarge'));
-        options.onError?.(new Error('File too large'));
         return;
       }
 
@@ -157,18 +164,15 @@ export const Content = memo<ContentProps>(({ user, onSuccess }) => {
         const result = await uploadWithProgress({ file });
         if (!result?.url) {
           toast.error(t('user.workspaceProfile.errors.uploadFailed'));
-          options.onError?.(new Error('Upload failed'));
           return;
         }
         const url = result.url.startsWith('/')
           ? `${window.location.origin}${result.url}`
           : result.url;
         setBannerUrl(url);
-        options.onSuccess?.(result);
       } catch (error) {
         console.error('[WorkspaceProfileModal] Banner upload failed:', error);
         toast.error(t('user.workspaceProfile.errors.uploadFailed'));
-        options.onError?.(error as Error);
       } finally {
         setBannerUploading(false);
       }
@@ -237,9 +241,7 @@ export const Content = memo<ContentProps>(({ user, onSuccess }) => {
         >
           <Input
             placeholder={t('user.workspaceProfile.fields.websiteUrl.placeholder')}
-            prefix={
-              <Icon color={cssVar.colorTextSecondary} icon={Globe} style={{ marginRight: 8 }} />
-            }
+            prefix={<Icon color={cssVar.colorTextSecondary} icon={Globe} />}
           />
         </Form.Item>
 
@@ -256,10 +258,9 @@ export const Content = memo<ContentProps>(({ user, onSuccess }) => {
           <Flexbox gap={8} width="100%">
             <Upload
               accept="image/*"
-              customRequest={handleBannerUpload}
               maxCount={1}
-              showUploadList={false}
               style={{ display: 'block', width: '100%' }}
+              onFiles={([file]) => handleBannerUpload(file)}
             >
               <div
                 style={{
@@ -359,9 +360,9 @@ export const Content = memo<ContentProps>(({ user, onSuccess }) => {
               ]}
             >
               <Input
-                showCount
                 maxLength={50}
                 placeholder={t('user.workspaceProfile.fields.displayName.placeholder')}
+                suffix={`${displayNameValue?.length ?? 0} / 50`}
               />
             </Form.Item>
           </Flexbox>
@@ -394,11 +395,11 @@ export const Content = memo<ContentProps>(({ user, onSuccess }) => {
               },
             ]}
           >
-            <AntInput
-              showCount
-              addonBefore={ORGANIZATION_URL_PREFIX}
+            <Input
               maxLength={32}
               placeholder={t('user.workspaceProfile.fields.namespace.placeholder')}
+              prefix={ORGANIZATION_URL_PREFIX}
+              suffix={`${namespaceValue?.length ?? 0} / 32`}
             />
           </Form.Item>
         )}
